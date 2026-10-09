@@ -41,9 +41,18 @@ def insert_new_tracks(tracks):
 
 def get_tracks(limit):
     conn = connect()
-    rows = conn.execute("SELECT * FROM tracks WHERE status = 'pending' LIMIT ?", (limit,)).fetchall()
+    rows = conn.execute(
+        "SELECT * FROM tracks WHERE status IN ('pending', 'matched') LIMIT ?", (limit,)
+    ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+def save_results(results):
+    conn = connect()
+    conn.executemany("UPDATE tracks SET video_id = ?, status = ? WHERE spotify_id = ?", results)
+    conn.commit()
+    conn.close()
 
 
 def count_by_status():
