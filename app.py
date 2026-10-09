@@ -18,6 +18,8 @@ def login():
 
 @app.route("/callback")
 def callback():
+    if "code" not in request.args:
+        return "Spotify login failed: " + request.args.get("error", "no code in URL (" + request.url + ")"), 400
     spotify.finish_login(request.args["code"])
     return redirect("/")
 
