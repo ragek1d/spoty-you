@@ -73,23 +73,46 @@ def get_playlist_id(yt):
 
 
 def process_batch(yt, playlist_id, tracks):
+    already_added = db.get_added_video_ids()
     results = []
     to_add = []
+    last_error = None
     for track in tracks:
         video_id = track["video_id"]
         if not video_id:
-            video_id, _ = retry(find_video_id, yt, track)
+            try:
+                video_id, _ = retry(find_video_id, yt, track)
+            except Exception as e:
+                last_error = e
+                continue
             time.sleep(0.3)
-        if video_id:
-            results.append((video_id, "matched", track["spotify_id"]))
-            to_add.append(video_id)
-        else:
+        if not video_id:
             results.append((None, "not_found", track["spotify_id"]))
+        elif video_id in already_added:
+            results.append((video_id, "added", track["spotify_id"]))
+        else:
+            already_added.add(video_id)
+            to_add.append(video_id)
+            results.append((video_id, "matched", track["spotify_id"]))
 
-    if to_add:
-        retry(yt.add_playlist_items, playlist_id, to_add, duplicates=False)
-        results = [(v, "added" if s == "matched" else s, i) for v, s, i in results]
+    if not results and last_error:
+        raise last_error
 
     db.save_results(results)
+
+    if to_add:
+        response = retry(yt.add_playlist_items, playlist_id, to_add, duplicates=True)
+        status = response.get("status") if isinstance(response, dict) else response
+        if "SUCCEEDED" not in str(status):
+            raise Exception("YouTube Music did not add the tracks: " + str(status)[:200])
+        db.save_results([(v, "added" if s == "matched" else s, i) for v, s, i in results])
+
     time.sleep(1)
-    return len(to_add), len(tracks) - len(to_add)
+
+
+def find_missing(yt, playlist_id):
+    playlist = retry(yt.get_playlist, playlist_id, limit=None)
+    tracks = playlist["tracks"]
+    if playlist.get("trackCount") and len(tracks) < playlist["trackCount"]:
+        raise Exception("Could not load the whole playlist to check it")
+    return db.reset_missing({t["videoId"] for t in tracks})

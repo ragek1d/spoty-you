@@ -55,6 +55,26 @@ def save_results(results):
     conn.close()
 
 
+def get_added_video_ids():
+    conn = connect()
+    rows = conn.execute("SELECT video_id FROM tracks WHERE status = 'added'").fetchall()
+    conn.close()
+    return {row["video_id"] for row in rows}
+
+
+def reset_missing(video_ids_in_playlist):
+    conn = connect()
+    rows = conn.execute("SELECT spotify_id, video_id FROM tracks WHERE status = 'added'").fetchall()
+    missing = 0
+    for row in rows:
+        if row["video_id"] not in video_ids_in_playlist:
+            conn.execute("UPDATE tracks SET status = 'matched' WHERE spotify_id = ?", (row["spotify_id"],))
+            missing += 1
+    conn.commit()
+    conn.close()
+    return missing
+
+
 def get_not_found():
     conn = connect()
     rows = conn.execute("SELECT * FROM tracks WHERE status = 'not_found'").fetchall()

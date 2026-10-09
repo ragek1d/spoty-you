@@ -11,6 +11,9 @@ import ytm
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
+MAX_FAILURES = 10
+MAX_CHECKS = 3
+
 job = {"running": False, "error": "", "started": 0, "finished": 0, "done_at_start": 0}
 
 
@@ -31,16 +34,36 @@ def get_timer(counts):
 
 
 def run_job():
-    try:
-        yt = ytm.get_client()
-        playlist_id = ytm.get_playlist_id(yt)
-        while True:
+    failures = 0
+    checks = 0
+    yt = None
+    while True:
+        try:
+            if yt is None:
+                yt = ytm.get_client()
+                playlist_id = ytm.get_playlist_id(yt)
             tracks = db.get_tracks(ytm.BATCH_SIZE)
             if not tracks:
-                break
+                missing = ytm.find_missing(yt, playlist_id)
+                checks += 1
+                if missing == 0:
+                    break
+                if checks >= MAX_CHECKS:
+                    job["error"] = str(missing) + " tracks could not be added. Click Resume to try again."
+                    break
+                continue
             ytm.process_batch(yt, playlist_id, tracks)
-    except Exception as e:
-        job["error"] = str(e)
+            failures = 0
+            job["error"] = ""
+        except Exception as e:
+            failures += 1
+            if failures >= MAX_FAILURES or "401" in str(e):
+                job["error"] = str(e)
+                break
+            wait = min(30 * failures, 300)
+            job["error"] = str(e) + " (trying again in " + str(wait) + " seconds)"
+            time.sleep(wait)
+            yt = None
     job["finished"] = time.time()
     job["running"] = False
 
