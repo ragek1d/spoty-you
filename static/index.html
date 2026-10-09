@@ -2,40 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>spoty-you</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <h1>spoty-you</h1>
-  <p id="info">Loading...</p>
-  <a href="/login"><button>Login</button></a>
-  <button id="fetch">Fetch liked songs</button>
-  <button id="start">Start</button>
-  <button id="resume">Resume</button>
-  <button id="sync">Sync</button>
-  <a href="/report"><button>Download report</button></a>
-  <script>
-    async function refresh() {
-      const data = await (await fetch("/status")).json();
-      document.getElementById("info").textContent =
-        (data.logged_in ? "Logged in. " : "Not logged in. ") +
-        (data.running ? "Running... " : "Idle. ") +
-        JSON.stringify(data.counts) +
-        (data.error ? " Error: " + data.error : "");
-    }
-    async function post(url) {
-      await fetch(url, { method: "POST" });
-      refresh();
-    }
-    document.getElementById("start").onclick = () => post("/start");
-    document.getElementById("resume").onclick = () => post("/start");
-    document.getElementById("sync").onclick = () => post("/sync");
-    setInterval(refresh, 2000);
-    document.getElementById("fetch").onclick = async () => {
-      const data = await (await fetch("/fetch", { method: "POST" })).json();
-      alert("Total: " + data.total + ", new: " + data.new);
-      refresh();
-    };
-    refresh();
-  </script>
+  <div class="bubble b1"></div>
+  <div class="bubble b2"></div>
+  <div class="bubble b3"></div>
+  <div class="bubble b4"></div>
+  <div class="bubble b5"></div>
+
+  <main class="glass">
+    <h1>spoty-you</h1>
+    <p class="subtitle">Spotify Liked Songs &rarr; YouTube Music</p>
+
+    <p id="state" class="state">Loading...</p>
+
+    <div class="progress">
+      <div id="bar" class="bar"></div>
+    </div>
+    <p id="percent" class="percent">0%</p>
+
+    <div class="counts">
+      <div class="count"><b id="added">0</b><span>Added</span></div>
+      <div class="count"><b id="not_found">0</b><span>Not found</span></div>
+      <div class="count"><b id="pending">0</b><span>Pending</span></div>
+    </div>
+
+    <p id="error" class="error"></p>
+
+    <div class="buttons">
+      <a class="button blue" href="/login">Login</a>
+      <button id="start" class="button green">Start</button>
+      <button id="resume" class="button green">Resume</button>
+      <button id="sync" class="button blue">Sync</button>
+      <a class="button blue" href="/report">Download report</a>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
 </body>
 </html>
