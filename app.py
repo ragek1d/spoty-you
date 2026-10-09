@@ -1,9 +1,36 @@
 from flask import Flask, jsonify, redirect, request, send_from_directory
 
+import threading
+
 import db
 import spotify
+import ytm
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+
+job = {"running": False, "error": ""}
+
+
+def run_job():
+    try:
+        yt = ytm.get_client()
+        playlist_id = ytm.get_playlist_id(yt)
+        while True:
+            tracks = db.get_tracks(ytm.BATCH_SIZE)
+            if not tracks:
+                break
+            ytm.process_batch(yt, playlist_id, tracks)
+    except Exception as e:
+        job["error"] = str(e)
+    job["running"] = False
+
+
+def start_job():
+    if job["running"]:
+        return
+    job["running"] = True
+    job["error"] = ""
+    threading.Thread(target=run_job, daemon=True).start()
 
 
 @app.route("/")
@@ -31,9 +58,30 @@ def fetch():
     return jsonify({"total": len(tracks), "new": added})
 
 
+@app.route("/start", methods=["POST"])
+def start():
+    start_job()
+    return jsonify({"ok": True})
+
+
+@app.route("/sync", methods=["POST"])
+def sync():
+    tracks = spotify.fetch_liked_tracks()
+    added = db.insert_new_tracks(tracks)
+    start_job()
+    return jsonify({"total": len(tracks), "new": added})
+
+
 @app.route("/status")
 def status():
-    return jsonify({"logged_in": spotify.is_logged_in(), "counts": db.count_by_status()})
+    return jsonify(
+        {
+            "logged_in": spotify.is_logged_in(),
+            "counts": db.count_by_status(),
+            "running": job["running"],
+            "error": job["error"],
+        }
+    )
 
 
 if __name__ == "__main__":
