@@ -1,4 +1,4 @@
-from flask import Flask, Response, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, jsonify, redirect, request, send_file, send_from_directory
 
 import csv
 import io
@@ -98,6 +98,11 @@ def report():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=not_found.csv"},
     )
+
+
+@app.route("/sounds/error")
+def error_sound():
+    return send_file("C:/Windows/Media/Windows Critical Stop.wav")
 
 
 if __name__ == "__main__":

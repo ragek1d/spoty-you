@@ -215,6 +215,27 @@ h1 {
   cursor: default;
 }
 
+.mute {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+.credit {
+  margin: 20px 0 0;
+  font-size: 13px;
+  color: #1a5c86;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+#music {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bubble,
   .bar.moving {

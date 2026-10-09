@@ -1,5 +1,13 @@
+const MUSIC_VIDEO_ID = "b12dBv7EDjU";
+
 let total = 0;
 let busy = false;
+let wasRunning = false;
+let muted = localStorage.getItem("muted") === "1";
+let player = null;
+let playerReady = false;
+let clicked = false;
+let audioContext = null;
 
 function el(id) {
   return document.getElementById(id);
@@ -37,6 +45,11 @@ async function refresh() {
     }
   }
 
+  if (wasRunning && !data.running && data.error) {
+    playErrorSound();
+  }
+  wasRunning = data.running;
+
   const locked = busy || data.running || !data.logged_in;
   el("start").disabled = locked;
   el("resume").disabled = locked;
@@ -57,6 +70,76 @@ async function post(url, message) {
   }
 }
 
+function playPop() {
+  if (muted) {
+    return;
+  }
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+  const now = audioContext.currentTime;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.frequency.setValueAtTime(300, now);
+  oscillator.frequency.exponentialRampToValueAtTime(1500, now + 0.07);
+  gain.gain.setValueAtTime(0.35, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.12);
+}
+
+function playErrorSound() {
+  if (muted) {
+    return;
+  }
+  new Audio("/sounds/error").play().catch(() => {});
+}
+
+function updateMusic() {
+  el("mute").textContent = muted ? "Sound: off" : "Sound: on";
+  if (!playerReady || !clicked) {
+    return;
+  }
+  if (muted) {
+    player.pauseVideo();
+  } else {
+    player.playVideo();
+  }
+}
+
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player("music", {
+    width: 200,
+    height: 200,
+    videoId: MUSIC_VIDEO_ID,
+    playerVars: { loop: 1, playlist: MUSIC_VIDEO_ID, controls: 0 },
+    events: {
+      onReady: () => {
+        playerReady = true;
+        player.setVolume(40);
+        updateMusic();
+      },
+    },
+  });
+}
+
+document.addEventListener("click", () => {
+  clicked = true;
+  updateMusic();
+});
+
+for (const button of document.querySelectorAll(".button")) {
+  button.addEventListener("click", playPop);
+}
+
+el("mute").onclick = () => {
+  muted = !muted;
+  localStorage.setItem("muted", muted ? "1" : "0");
+  updateMusic();
+};
+
 el("start").onclick = () => {
   if (total === 0) {
     post("/sync", "Fetching liked songs from Spotify...");
@@ -67,5 +150,10 @@ el("start").onclick = () => {
 el("resume").onclick = () => post("/start", "Resuming...");
 el("sync").onclick = () => post("/sync", "Fetching liked songs from Spotify...");
 
+const youtubeScript = document.createElement("script");
+youtubeScript.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(youtubeScript);
+
+updateMusic();
 setInterval(refresh, 2000);
 refresh();
