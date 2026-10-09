@@ -13,6 +13,18 @@ function el(id) {
   return document.getElementById(id);
 }
 
+function formatTime(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const mm = String(minutes).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+  if (hours > 0) {
+    return hours + ":" + mm + ":" + ss;
+  }
+  return mm + ":" + ss;
+}
+
 async function refresh() {
   const data = await (await fetch("/status")).json();
   const added = data.counts.added || 0;
@@ -32,6 +44,15 @@ async function refresh() {
   el("bar").classList.toggle("moving", data.running);
   el("percent").textContent = percent + "% of " + total + " tracks";
   el("error").textContent = data.error ? "Error: " + data.error : "";
+
+  let timer = "";
+  if (data.elapsed) {
+    timer = "Time: " + formatTime(data.elapsed);
+    if (data.eta !== null && data.eta !== undefined) {
+      timer += " · about " + formatTime(data.eta) + " left";
+    }
+  }
+  el("timer").textContent = timer;
 
   if (!busy) {
     if (!data.logged_in) {

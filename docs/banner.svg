@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 480" width="1280" height="480" font-family="Segoe UI, Tahoma, Helvetica, Arial, sans-serif">
+  <title>spoty-you: copy Spotify Liked Songs to YouTube Music, made by ragek1d</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e90e0"/>
+      <stop offset="0.5" stop-color="#5cc4f5"/>
+      <stop offset="1" stop-color="#bdeeff"/>
+    </linearGradient>
+    <radialGradient id="hill" cx="0.5" cy="1" r="0.75">
+      <stop offset="0" stop-color="#9be86a"/>
+      <stop offset="0.5" stop-color="#4fc04a"/>
+      <stop offset="1" stop-color="#4fc04a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bubble" cx="0.32" cy="0.28" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.25" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="0.65" stop-color="#78dcff" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.55"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.34"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#003c6e" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#92ec62"/>
+      <stop offset="0.5" stop-color="#3fb92c"/>
+      <stop offset="0.51" stop-color="#2a9c1c"/>
+      <stop offset="1" stop-color="#5dd044"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5cc8ff"/>
+      <stop offset="0.5" stop-color="#1688dc"/>
+      <stop offset="0.51" stop-color="#0a6cc0"/>
+      <stop offset="1" stop-color="#2fa4ee"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#003c78" flood-opacity="0.32"/>
+    </filter>
+    <clipPath id="round">
+      <rect width="1280" height="480" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="1280" height="480" fill="url(#sky)"/>
+    <ellipse cx="640" cy="560" rx="760" ry="230" fill="url(#hill)"/>
+    <ellipse cx="230" cy="80" rx="300" ry="120" fill="url(#cloud)"/>
+    <ellipse cx="1010" cy="110" rx="260" ry="100" fill="url(#cloud)"/>
+    <ellipse cx="640" cy="40" rx="220" ry="70" fill="url(#cloud)" opacity="0.6"/>
+
+    <circle cx="120" cy="300" r="78" fill="url(#bubble)" stroke="#ffffff" stroke-opacity="0.6"/>
+    <circle cx="250" cy="420" r="34" fill="url(#bubble)" stroke="#ffffff" stroke-opacity="0.6"/>
+    <circle cx="1150" cy="330" r="96" fill="url(#bubble)" stroke="#ffffff" stroke-opacity="0.6"/>
+    <circle cx="1040" cy="70" r="30" fill="url(#bubble)" stroke="#ffffff" stroke-opacity="0.6"/>
+    <circle cx="1010" cy="440" r="42" fill="url(#bubble)" stroke="#ffffff" stroke-opacity="0.6"/>
+    <circle cx="60" cy="110" r="26" fill="url(#bubble)" stroke="#ffffff" stroke-opacity="0.6"/>
+
+    <rect x="290" y="60" width="700" height="360" rx="30" fill="url(#glass)" stroke="#ffffff" stroke-opacity="0.9" stroke-width="2" filter="url(#shadow)"/>
+
+    <text x="640" y="158" text-anchor="middle" font-size="76" font-weight="600" fill="#0a5fa8" letter-spacing="-1">spoty-you</text>
+    <text x="640" y="206" text-anchor="middle" font-size="26" fill="#1a5c86">Copy your Spotify Liked Songs to YouTube Music</text>
+
+    <rect x="360" y="238" width="560" height="34" rx="17" fill="url(#track)" stroke="#ffffff" stroke-opacity="0.9"/>
+    <rect x="364" y="242" width="400" height="26" rx="13" fill="url(#green)"/>
+    <rect x="368" y="244" width="392" height="11" rx="6" fill="url(#gloss)"/>
+
+    <g font-size="20" font-weight="600" fill="#ffffff" text-anchor="middle">
+      <rect x="372" y="298" width="150" height="44" rx="22" fill="url(#blue)" stroke="#00467f" stroke-opacity="0.55"/>
+      <rect x="378" y="301" width="138" height="19" rx="10" fill="url(#gloss)"/>
+      <text x="447" y="327">Spotify</text>
+
+      <text x="640" y="330" font-size="34" fill="#0a5fa8">&#8594;</text>
+
+      <rect x="718" y="298" width="190" height="44" rx="22" fill="url(#green)" stroke="#146414" stroke-opacity="0.55"/>
+      <rect x="724" y="301" width="178" height="19" rx="10" fill="url(#gloss)"/>
+      <text x="813" y="327">YouTube Music</text>
+    </g>
+
+    <text x="640" y="390" text-anchor="middle" font-size="20" fill="#1a5c86">made by ragek1d</text>
+  </g>
+</svg>

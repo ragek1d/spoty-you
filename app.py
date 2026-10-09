@@ -3,6 +3,7 @@ from flask import Flask, Response, jsonify, redirect, request, send_file, send_f
 import csv
 import io
 import threading
+import time
 
 import db
 import spotify
@@ -10,7 +11,23 @@ import ytm
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
-job = {"running": False, "error": ""}
+job = {"running": False, "error": "", "started": 0, "finished": 0, "done_at_start": 0}
+
+
+def count_done(counts):
+    return counts.get("added", 0) + counts.get("not_found", 0)
+
+
+def get_timer(counts):
+    if not job["started"]:
+        return 0, None
+    end = job["finished"] or time.time()
+    elapsed = int(end - job["started"])
+    done_now = count_done(counts) - job["done_at_start"]
+    left = counts.get("pending", 0) + counts.get("matched", 0)
+    if job["running"] and done_now > 0:
+        return elapsed, int(left * elapsed / done_now)
+    return elapsed, None
 
 
 def run_job():
@@ -24,6 +41,7 @@ def run_job():
             ytm.process_batch(yt, playlist_id, tracks)
     except Exception as e:
         job["error"] = str(e)
+    job["finished"] = time.time()
     job["running"] = False
 
 
@@ -32,6 +50,9 @@ def start_job():
         return
     job["running"] = True
     job["error"] = ""
+    job["started"] = time.time()
+    job["finished"] = 0
+    job["done_at_start"] = count_done(db.count_by_status())
     threading.Thread(target=run_job, daemon=True).start()
 
 
@@ -76,10 +97,14 @@ def sync():
 
 @app.route("/status")
 def status():
+    counts = db.count_by_status()
+    elapsed, eta = get_timer(counts)
     return jsonify(
         {
             "logged_in": spotify.is_logged_in(),
-            "counts": db.count_by_status(),
+            "counts": counts,
+            "elapsed": elapsed,
+            "eta": eta,
             "running": job["running"],
             "error": job["error"],
         }

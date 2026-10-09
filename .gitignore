@@ -6,3 +6,4 @@ not_found.csv
 __pycache__/
 .venv/
 playlist_id.txt
+headers_raw.txt

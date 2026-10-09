@@ -148,9 +148,17 @@ h1 {
 }
 
 .percent {
-  margin: 8px 0 18px;
+  margin: 8px 0 4px;
   font-size: 14px;
   color: #1a5c86;
+}
+
+.timer {
+  min-height: 18px;
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a5fa8;
 }
 
 .counts {
