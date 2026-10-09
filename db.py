@@ -75,6 +75,13 @@ def reset_missing(video_ids_in_playlist):
     return missing
 
 
+def reset_not_found():
+    conn = connect()
+    conn.execute("UPDATE tracks SET status = 'pending' WHERE status = 'not_found'")
+    conn.commit()
+    conn.close()
+
+
 def get_not_found():
     conn = connect()
     rows = conn.execute("SELECT * FROM tracks WHERE status = 'not_found'").fetchall()

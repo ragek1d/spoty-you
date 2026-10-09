@@ -11,6 +11,14 @@ MIN_SCORE = 70
 PLAYLIST_NAME = "Spotify Liked Songs"
 PLAYLIST_FILE = "playlist_id.txt"
 BATCH_SIZE = 50
+MAX_DURATION_DIFFERENCE = 20
+
+CYRILLIC = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh", "з": "z",
+    "и": "i", "й": "y", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r",
+    "с": "s", "т": "t", "у": "u", "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh",
+    "щ": "shch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}
 
 
 def get_client():
@@ -24,31 +32,79 @@ def normalize(text):
     return " ".join(text.split())
 
 
+def plain(text):
+    return " ".join(re.sub(r"[^\w\s]", " ", text.lower()).split())
+
+
+def short_title(title):
+    return title.split(" - ")[0]
+
+
+def similarity(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+
+def title_similarity(a, b):
+    return max(
+        similarity(normalize(a), normalize(b)),
+        similarity(normalize(short_title(a)), normalize(short_title(b))),
+        similarity(plain(a), plain(b)),
+    )
+
+
+def to_latin(text):
+    return "".join(CYRILLIC.get(letter, letter) for letter in text)
+
+
+def same_artist(wanted, name):
+    if not wanted or not name:
+        return False
+    if wanted in name or name in wanted:
+        return True
+    return similarity(to_latin(wanted), to_latin(name)) >= 0.8
+
+
 def score(track, result):
-    title_score = SequenceMatcher(None, normalize(track["title"]), normalize(result["title"])).ratio() * 50
-
     wanted_artist = normalize(track["artist"])
-    result_artists = [normalize(a["name"]) for a in result.get("artists") or []]
-    artist_score = 30 if wanted_artist in result_artists else 0
+    artist_found = False
+    for artist in result.get("artists") or []:
+        if same_artist(wanted_artist, normalize(artist["name"])):
+            artist_found = True
+    if not artist_found:
+        return 0
 
-    duration_score = 0
-    if result.get("duration_seconds") and abs(result["duration_seconds"] - track["duration"]) <= 3:
-        duration_score = 20
+    title_score = title_similarity(track["title"], result["title"]) * 50
 
-    return title_score + artist_score + duration_score
+    difference = 999
+    if result.get("duration_seconds"):
+        difference = abs(result["duration_seconds"] - track["duration"])
+    duration_score = 20 if difference <= 3 else 0
+    if difference != 999 and difference > MAX_DURATION_DIFFERENCE:
+        return 0
+
+    # same song with the title in another language (for example Korean and English)
+    if difference <= 1 and track["title"].isascii() != result["title"].isascii():
+        return MIN_SCORE
+
+    return title_score + 30 + duration_score
 
 
 def find_video_id(yt, track):
-    results = yt.search(track["artist"] + " " + track["title"], filter="songs", limit=5)
+    queries = [track["artist"] + " " + track["title"]]
+    if short_title(track["title"]) != track["title"]:
+        queries.append(track["artist"] + " " + short_title(track["title"]))
+
     best_id = None
     best_score = 0
-    for result in results:
-        s = score(track, result)
-        if s > best_score:
-            best_id = result["videoId"]
-            best_score = s
-    if best_score >= MIN_SCORE:
-        return best_id, best_score
+    for query in queries:
+        for result in yt.search(query, filter="songs", limit=5):
+            s = score(track, result)
+            if result.get("videoId") and s > best_score:
+                best_id = result["videoId"]
+                best_score = s
+        if best_score >= MIN_SCORE:
+            return best_id, best_score
+        time.sleep(0.3)
     return None, best_score
 
 

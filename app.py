@@ -110,6 +110,14 @@ def start():
     return jsonify({"ok": True})
 
 
+@app.route("/retry", methods=["POST"])
+def retry_not_found():
+    if not job["running"]:
+        db.reset_not_found()
+        start_job()
+    return jsonify({"ok": True})
+
+
 @app.route("/sync", methods=["POST"])
 def sync():
     tracks = spotify.fetch_liked_tracks()

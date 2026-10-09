@@ -139,6 +139,7 @@ Keep the terminal window open while it works. When it says **Done**, open YouTub
 | **Start** | Reads your Liked Songs and starts copying |
 | **Resume** | Continues after a stop or an error |
 | **Sync** | Checks Spotify for newly liked songs and copies only those |
+| **Retry not found** | Searches again for the songs that were not found earlier |
 | **Download report** | Saves `not_found.csv`, the list of songs that were not found |
 | **Sound: on/off** | Turns the music and sound effects on or off |
 
@@ -304,6 +305,7 @@ python app.py
 | **Start** | Читает любимые треки и начинает перенос |
 | **Resume** | Продолжает после остановки или ошибки |
 | **Sync** | Проверяет новые лайки в Spotify и переносит только их |
+| **Retry not found** | Ещё раз ищет песни, которые не нашлись раньше |
 | **Download report** | Сохраняет `not_found.csv`, список ненайденных песен |
 | **Sound: on/off** | Включает и выключает музыку и звуки |
 

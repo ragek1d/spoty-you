@@ -75,6 +75,7 @@ async function refresh() {
   el("start").disabled = locked;
   el("resume").disabled = locked;
   el("sync").disabled = locked;
+  el("retry").disabled = locked || notFound === 0;
 }
 
 async function post(url, message) {
@@ -170,6 +171,7 @@ el("start").onclick = () => {
 };
 el("resume").onclick = () => post("/start", "Resuming...");
 el("sync").onclick = () => post("/sync", "Fetching liked songs from Spotify...");
+el("retry").onclick = () => post("/retry", "Searching again for tracks that were not found...");
 
 const youtubeScript = document.createElement("script");
 youtubeScript.src = "https://www.youtube.com/iframe_api";
