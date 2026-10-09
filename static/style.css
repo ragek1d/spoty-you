@@ -14,10 +14,43 @@ body {
   overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 115%, #9be86a 0%, #4fc04a 28%, transparent 55%),
-    radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, 0.9) 0%, transparent 35%),
-    radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.7) 0%, transparent 30%),
     linear-gradient(180deg, #1e90e0 0%, #5cc4f5 45%, #bdeeff 100%);
   background-attachment: fixed;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: -25%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  background:
+    radial-gradient(ellipse at 22% 22%, rgba(255, 255, 255, 0.9) 0%, transparent 24%),
+    radial-gradient(ellipse at 72% 30%, rgba(255, 255, 255, 0.7) 0%, transparent 20%),
+    radial-gradient(ellipse at 48% 12%, rgba(255, 255, 255, 0.5) 0%, transparent 16%);
+  animation: clouds 40s ease-in-out infinite alternate;
+}
+
+body::after {
+  background:
+    radial-gradient(circle at 30% 60%, rgba(120, 255, 220, 0.35) 0%, transparent 22%),
+    radial-gradient(circle at 75% 70%, rgba(170, 255, 120, 0.3) 0%, transparent 20%),
+    radial-gradient(circle at 60% 35%, rgba(140, 220, 255, 0.4) 0%, transparent 24%);
+  animation: glow 28s ease-in-out infinite alternate;
+}
+
+@keyframes clouds {
+  from { transform: translate(-8%, -2%) scale(1); }
+  to { transform: translate(8%, 3%) scale(1.12); }
+}
+
+@keyframes glow {
+  from { transform: translate(6%, 4%) rotate(0deg); }
+  to { transform: translate(-6%, -5%) rotate(12deg); }
 }
 
 .bubble {
@@ -41,8 +74,10 @@ body {
 .b5 { width: 110px; height: 110px; left: 46%; top: 82%; animation-duration: 11s; }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-26px); }
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(22px, -34px) scale(1.04); }
+  50% { transform: translate(-12px, -62px) scale(0.97); }
+  75% { transform: translate(-28px, -24px) scale(1.03); }
 }
 
 .glass {
@@ -238,6 +273,8 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   .bubble,
+  body::before,
+  body::after,
   .bar.moving {
     animation: none;
   }
