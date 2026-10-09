@@ -1,0 +1,7 @@
+.env
+headers_auth.json
+.cache
+*.db
+not_found.csv
+__pycache__/
+.venv/

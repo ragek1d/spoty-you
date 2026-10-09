@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>spoty-you</title>
+</head>
+<body>
+  <h1>spoty-you</h1>
+  <p id="info">Loading...</p>
+  <a href="/login"><button>Login</button></a>
+  <button id="fetch">Fetch liked songs</button>
+  <script>
+    async function refresh() {
+      const data = await (await fetch("/status")).json();
+      document.getElementById("info").textContent =
+        (data.logged_in ? "Logged in. " : "Not logged in. ") + JSON.stringify(data.counts);
+    }
+    document.getElementById("fetch").onclick = async () => {
+      const data = await (await fetch("/fetch", { method: "POST" })).json();
+      alert("Total: " + data.total + ", new: " + data.new);
+      refresh();
+    };
+    refresh();
+  </script>
+</body>
+</html>
