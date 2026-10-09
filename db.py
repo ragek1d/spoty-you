@@ -55,6 +55,13 @@ def save_results(results):
     conn.close()
 
 
+def get_not_found():
+    conn = connect()
+    rows = conn.execute("SELECT * FROM tracks WHERE status = 'not_found'").fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
 def count_by_status():
     conn = connect()
     rows = conn.execute("SELECT status, COUNT(*) AS n FROM tracks GROUP BY status").fetchall()

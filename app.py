@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, jsonify, redirect, request, send_from_directory
 
+import csv
+import io
 import threading
 
 import db
@@ -81,6 +83,20 @@ def status():
             "running": job["running"],
             "error": job["error"],
         }
+    )
+
+
+@app.route("/report")
+def report():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["title", "artist", "spotify url"])
+    for track in db.get_not_found():
+        writer.writerow([track["title"], track["artist"], "https://open.spotify.com/track/" + track["spotify_id"]])
+    return Response(
+        "﻿" + output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=not_found.csv"},
     )
 
 

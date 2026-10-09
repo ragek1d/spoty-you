@@ -12,6 +12,7 @@
   <button id="start">Start</button>
   <button id="resume">Resume</button>
   <button id="sync">Sync</button>
+  <a href="/report"><button>Download report</button></a>
   <script>
     async function refresh() {
       const data = await (await fetch("/status")).json();
