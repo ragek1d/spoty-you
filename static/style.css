@@ -258,6 +258,49 @@ h1 {
   cursor: default;
 }
 
+.help {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #1a5c86;
+}
+
+.help a {
+  color: #0a5fa8;
+}
+
+.fields {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.fields label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.fields input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #0b3a5c;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 2px 5px rgba(0, 50, 100, 0.25);
+}
+
+.fields input:focus-visible {
+  outline: 2px solid #1688dc;
+}
+
 .mute {
   position: absolute;
   top: 14px;
@@ -281,13 +324,13 @@ h1 {
 
 @media (max-height: 640px) {
   .glass {
-    zoom: 0.8;
+    zoom: 0.72;
   }
 }
 
 @media (max-height: 460px) {
   .glass {
-    zoom: 0.6;
+    zoom: 0.52;
   }
 }
 

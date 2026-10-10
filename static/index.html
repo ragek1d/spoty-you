@@ -20,6 +20,33 @@
     <h1>spoty-you</h1>
     <p class="subtitle">Spotify Liked Songs &rarr; YouTube Music</p>
 
+    <div id="settings" hidden>
+      <p class="help">
+        Create an app at <a href="https://developer.spotify.com/dashboard" target="_blank">developer.spotify.com/dashboard</a>
+        with the redirect URI <b>http://127.0.0.1:8888/callback</b> and paste its keys here.
+      </p>
+      <div class="fields">
+        <label>Spotify Client ID<input id="SPOTIPY_CLIENT_ID"></label>
+        <label>Spotify Client Secret<input id="SPOTIPY_CLIENT_SECRET" type="password"></label>
+      </div>
+      <p class="help">
+        Only if the YouTube login window does not work: keys of a Google Cloud OAuth client
+        (type "TVs and Limited Input devices", YouTube Data API enabled).
+      </p>
+      <div class="fields">
+        <label>Google Client ID<input id="GOOGLE_CLIENT_ID"></label>
+        <label>Google Client Secret<input id="GOOGLE_CLIENT_SECRET" type="password"></label>
+      </div>
+      <p id="code" class="help" hidden>Open <a id="code_url" target="_blank"></a> and enter the code <b id="code_text"></b></p>
+      <p id="code_error" class="error"></p>
+      <div class="buttons">
+        <button id="save" class="button green">Save</button>
+        <button id="code_login" class="button blue">YouTube login with code</button>
+        <button id="back" class="button blue">Back</button>
+      </div>
+    </div>
+
+    <div id="home">
     <p id="state" class="state">Loading...</p>
 
     <div class="progress">
@@ -44,6 +71,8 @@
       <button id="sync" class="button blue">Sync</button>
       <button id="retry" class="button blue">Retry not found</button>
       <a class="button blue" href="/report">Download report</a>
+      <button id="open_settings" class="button blue">Settings</button>
+    </div>
     </div>
     <p class="credit">made by ragek1d</p>
   </main>

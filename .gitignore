@@ -1,9 +1,13 @@
 .env
 headers_auth.json
+oauth.json
 .cache
 *.db
 not_found.csv
 __pycache__/
+build/
+dist/
+*.spec
 .venv/
 playlist_id.txt
 headers_raw.txt

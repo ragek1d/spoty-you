@@ -8,6 +8,9 @@ let player = null;
 let playerReady = false;
 let clicked = false;
 let audioContext = null;
+let askedForKeys = false;
+
+const KEYS = ["SPOTIPY_CLIENT_ID", "SPOTIPY_CLIENT_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
 
 function el(id) {
   return document.getElementById(id);
@@ -54,8 +57,15 @@ async function refresh() {
   }
   el("timer").textContent = timer;
 
+  if (!data.has_keys && !askedForKeys) {
+    askedForKeys = true;
+    openSettings();
+  }
+
   if (!busy) {
-    if (!data.logged_in) {
+    if (!data.has_keys) {
+      el("state").textContent = "Add your Spotify keys in Settings";
+    } else if (!data.logged_in) {
       el("state").textContent = "Not logged in to Spotify";
     } else if (!data.youtube_logged_in) {
       el("state").textContent = "Not logged in to YouTube Music";
@@ -91,6 +101,45 @@ async function post(url, message) {
   } finally {
     busy = false;
     refresh();
+  }
+}
+
+function showSettings(show) {
+  el("home").hidden = show;
+  el("settings").hidden = !show;
+}
+
+async function openSettings() {
+  const values = await (await fetch("/settings")).json();
+  for (const key of KEYS) {
+    el(key).value = values[key];
+  }
+  el("code").hidden = true;
+  el("code_error").textContent = "";
+  showSettings(true);
+}
+
+async function saveSettings() {
+  const values = {};
+  for (const key of KEYS) {
+    values[key] = el(key).value;
+  }
+  await fetch("/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+}
+
+async function loginWithCode() {
+  await saveSettings();
+  const data = await (await fetch("/youtube/code", { method: "POST" })).json();
+  el("code").hidden = !!data.error;
+  el("code_error").textContent = data.error ? "Error: " + data.error : "";
+  if (!data.error) {
+    el("code_url").href = data.url;
+    el("code_url").textContent = data.url;
+    el("code_text").textContent = data.code;
   }
 }
 
@@ -172,6 +221,14 @@ el("start").onclick = () => {
   }
 };
 el("youtube").onclick = () => fetch("/youtube/login", { method: "POST" });
+el("open_settings").onclick = openSettings;
+el("back").onclick = () => showSettings(false);
+el("code_login").onclick = loginWithCode;
+el("save").onclick = async () => {
+  await saveSettings();
+  showSettings(false);
+  refresh();
+};
 el("resume").onclick = () => post("/start", "Resuming...");
 el("sync").onclick = () => post("/sync", "Fetching liked songs from Spotify...");
 el("retry").onclick = () => post("/retry", "Searching again for tracks that were not found...");

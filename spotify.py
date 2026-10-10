@@ -2,37 +2,34 @@ import os
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-
-def load_env():
-    if not os.path.exists(".env"):
-        return
-    with open(".env", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, value = line.split("=", 1)
-                os.environ.setdefault(key.strip(), value.strip())
+import settings
 
 
-load_env()
+settings.load()
 
-auth = SpotifyOAuth(scope="user-library-read", cache_path=".cache")
+
+def has_keys():
+    return bool(os.environ.get("SPOTIPY_CLIENT_ID") and os.environ.get("SPOTIPY_CLIENT_SECRET"))
+
+
+def get_auth():
+    return SpotifyOAuth(scope="user-library-read", cache_path=".cache")
 
 
 def get_login_url():
-    return auth.get_authorize_url()
+    return get_auth().get_authorize_url()
 
 
 def finish_login(code):
-    auth.get_access_token(code, as_dict=False)
+    get_auth().get_access_token(code, as_dict=False)
 
 
 def is_logged_in():
-    return auth.get_cached_token() is not None
+    return has_keys() and get_auth().get_cached_token() is not None
 
 
 def fetch_liked_tracks():
-    sp = spotipy.Spotify(auth_manager=auth)
+    sp = spotipy.Spotify(auth_manager=get_auth())
     tracks = []
     offset = 0
     while True:

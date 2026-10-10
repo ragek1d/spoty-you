@@ -4,7 +4,7 @@ import re
 import time
 from difflib import SequenceMatcher
 
-from ytmusicapi import YTMusic
+from ytmusicapi import OAuthCredentials, YTMusic
 
 import db
 
@@ -12,6 +12,7 @@ MIN_SCORE = 70
 PLAYLIST_NAME = "Spotify Liked Songs"
 PLAYLIST_FILE = "playlist_id.txt"
 AUTH_FILE = "headers_auth.json"
+OAUTH_FILE = "oauth.json"
 BATCH_SIZE = 50
 MAX_DURATION_DIFFERENCE = 20
 
@@ -23,15 +24,39 @@ CYRILLIC = {
 }
 
 
+def get_credentials():
+    return OAuthCredentials(os.environ.get("GOOGLE_CLIENT_ID", ""), os.environ.get("GOOGLE_CLIENT_SECRET", ""))
+
+
 def get_client():
+    if os.path.exists(OAUTH_FILE):
+        return YTMusic(OAUTH_FILE, oauth_credentials=get_credentials())
     return YTMusic(AUTH_FILE)
 
 
 def is_logged_in():
-    return os.path.exists(AUTH_FILE)
+    return os.path.exists(AUTH_FILE) or os.path.exists(OAUTH_FILE)
+
+
+def get_login_code():
+    return get_credentials().get_code()
+
+
+def finish_code_login(device_code):
+    token = get_credentials().token_from_code(device_code)
+    if "access_token" not in token:
+        return False
+    token["expires_at"] = int(time.time()) + token["expires_in"]
+    with open(OAUTH_FILE, "w", encoding="utf-8") as f:
+        json.dump(token, f)
+    if os.path.exists(AUTH_FILE):
+        os.remove(AUTH_FILE)
+    return True
 
 
 def save_cookies(cookie_text):
+    if os.path.exists(OAUTH_FILE):
+        os.remove(OAUTH_FILE)
     headers = {
         "accept": "*/*",
         "authorization": "SAPISIDHASH",

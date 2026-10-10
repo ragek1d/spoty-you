@@ -2,12 +2,18 @@ from flask import Flask, Response, jsonify, redirect, request, send_file, send_f
 
 import csv
 import io
+import os
+import sys
 import threading
 import time
 
 import webview
 
+if getattr(sys, "frozen", False):
+    os.chdir(os.path.dirname(sys.executable))
+
 import db
+import settings
 import spotify
 import ytm
 
@@ -131,6 +137,33 @@ def youtube_login():
     return jsonify({"ok": True})
 
 
+def wait_for_code_login(code):
+    deadline = time.time() + code["expires_in"]
+    while time.time() < deadline:
+        time.sleep(code["interval"])
+        if ytm.finish_code_login(code["device_code"]):
+            return
+
+
+@app.route("/youtube/code", methods=["POST"])
+def youtube_code():
+    try:
+        code = ytm.get_login_code()
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    if "user_code" not in code:
+        return jsonify({"error": str(code)})
+    threading.Thread(target=wait_for_code_login, args=(code,), daemon=True).start()
+    return jsonify({"url": code["verification_url"], "code": code["user_code"]})
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def edit_settings():
+    if request.method == "POST":
+        settings.save(request.get_json())
+    return jsonify(settings.get())
+
+
 @app.route("/fetch", methods=["POST"])
 def fetch():
     tracks = spotify.fetch_liked_tracks()
@@ -166,6 +199,7 @@ def status():
     elapsed, eta = get_timer(counts)
     return jsonify(
         {
+            "has_keys": spotify.has_keys(),
             "logged_in": spotify.is_logged_in(),
             "youtube_logged_in": ytm.is_logged_in(),
             "counts": counts,
