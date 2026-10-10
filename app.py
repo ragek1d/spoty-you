@@ -15,6 +15,10 @@ app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 MAX_FAILURES = 10
 MAX_CHECKS = 3
+YOUTUBE_LOGIN_URL = (
+    "https://accounts.google.com/ServiceLogin?service=youtube&continue="
+    "https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26next%3Dhttps%253A%252F%252Fmusic.youtube.com%252F"
+)
 
 job = {"running": False, "error": "", "started": 0, "finished": 0, "done_at_start": 0}
 
@@ -99,6 +103,34 @@ def callback():
     return redirect("/")
 
 
+def watch_youtube_login(window):
+    while window in webview.windows:
+        time.sleep(2)
+        try:
+            url = window.get_current_url() or ""
+            cookies = window.get_cookies()
+        except Exception:
+            continue
+        if not url.startswith("https://music.youtube.com"):
+            continue
+        pairs = []
+        for cookie in cookies:
+            for name in cookie:
+                pairs.append(name + "=" + cookie[name].value)
+        cookie_text = "; ".join(pairs)
+        if "__Secure-3PAPISID=" in cookie_text:
+            ytm.save_cookies(cookie_text)
+            window.destroy()
+            return
+
+
+@app.route("/youtube/login", methods=["POST"])
+def youtube_login():
+    window = webview.create_window("Sign in to YouTube Music", YOUTUBE_LOGIN_URL, width=520, height=680)
+    threading.Thread(target=watch_youtube_login, args=(window,), daemon=True).start()
+    return jsonify({"ok": True})
+
+
 @app.route("/fetch", methods=["POST"])
 def fetch():
     tracks = spotify.fetch_liked_tracks()
@@ -135,6 +167,7 @@ def status():
     return jsonify(
         {
             "logged_in": spotify.is_logged_in(),
+            "youtube_logged_in": ytm.is_logged_in(),
             "counts": counts,
             "elapsed": elapsed,
             "eta": eta,

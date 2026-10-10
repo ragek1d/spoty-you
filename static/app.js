@@ -57,6 +57,8 @@ async function refresh() {
   if (!busy) {
     if (!data.logged_in) {
       el("state").textContent = "Not logged in to Spotify";
+    } else if (!data.youtube_logged_in) {
+      el("state").textContent = "Not logged in to YouTube Music";
     } else if (data.running) {
       el("state").textContent = "Copying tracks...";
     } else if (total > 0 && pending === 0) {
@@ -71,7 +73,7 @@ async function refresh() {
   }
   wasRunning = data.running;
 
-  const locked = busy || data.running || !data.logged_in;
+  const locked = busy || data.running || !data.logged_in || !data.youtube_logged_in;
   el("start").disabled = locked;
   el("resume").disabled = locked;
   el("sync").disabled = locked;
@@ -169,6 +171,7 @@ el("start").onclick = () => {
     post("/start", "Starting...");
   }
 };
+el("youtube").onclick = () => fetch("/youtube/login", { method: "POST" });
 el("resume").onclick = () => post("/start", "Resuming...");
 el("sync").onclick = () => post("/sync", "Fetching liked songs from Spotify...");
 el("retry").onclick = () => post("/retry", "Searching again for tracks that were not found...");

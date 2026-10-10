@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import time
@@ -10,6 +11,7 @@ import db
 MIN_SCORE = 70
 PLAYLIST_NAME = "Spotify Liked Songs"
 PLAYLIST_FILE = "playlist_id.txt"
+AUTH_FILE = "headers_auth.json"
 BATCH_SIZE = 50
 MAX_DURATION_DIFFERENCE = 20
 
@@ -22,7 +24,24 @@ CYRILLIC = {
 
 
 def get_client():
-    return YTMusic("headers_auth.json")
+    return YTMusic(AUTH_FILE)
+
+
+def is_logged_in():
+    return os.path.exists(AUTH_FILE)
+
+
+def save_cookies(cookie_text):
+    headers = {
+        "accept": "*/*",
+        "authorization": "SAPISIDHASH",
+        "content-type": "application/json",
+        "x-goog-authuser": "0",
+        "x-origin": "https://music.youtube.com",
+        "cookie": cookie_text,
+    }
+    with open(AUTH_FILE, "w", encoding="utf-8") as f:
+        json.dump(headers, f)
 
 
 def normalize(text):
