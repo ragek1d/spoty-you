@@ -11,9 +11,11 @@ Owner is a beginner in Python: keep code simple, readable, no clever tricks.
 - sqlite3 (stdlib) for state. No other dependencies without asking.
 
 ## Structure
-- app.py        Flask routes + progress endpoint (SSE or polling)
+- app.py        Flask routes + progress endpoint (SSE or polling), opens the pywebview window (fixed, 1/4 of the screen)
+- settings.py   read/write keys in .env (edited from the Settings screen)
+- build.bat     PyInstaller build -> dist\spoty-you\spoty-you.exe (data files live next to the exe)
 - spotify.py    login, fetch liked tracks
-- ytm.py        search, match, add to playlist
+- ytm.py        search, match, add to playlist; login via window cookies (headers_auth.json) or device code (oauth.json)
 - db.py         SQLite: tracks(spotify_id, title, artist, duration, video_id, status)
 - static/       index.html, style.css, app.js
 - secrets live in .env and headers_auth.json (both in .gitignore, never commit)
@@ -28,11 +30,12 @@ Owner is a beginner in Python: keep code simple, readable, no clever tricks.
 
 ## UI
 - English only. Windows 7 Frutiger Aero: glossy aqua/green gradients, glass panels with blur and soft shadows, rounded corners, bubbles/sky background, Segoe UI.
-- Progress bar, buttons: Login, Start, Resume, Sync, Download report.
+- Progress bar, buttons: Spotify login, YouTube login, Start, Resume, Sync, Retry not found, Download report, Settings.
 
 ## Commands
 - Setup: pip install -r requirements.txt
-- Run: python app.py (http://127.0.0.1:8888)
+- Run: python app.py (opens the app window; server on http://127.0.0.1:8888)
+- Build: build.bat
 - Spotify redirect URI: http://127.0.0.1:8888/callback
 
 ## Token-saving rules
