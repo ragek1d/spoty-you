@@ -24,7 +24,10 @@
   <main class="glass">
     <button id="mute" class="button blue mute">Sound: on</button>
     <h1>spoty-you</h1>
-    <p class="subtitle">Spotify Liked Songs &rarr; YouTube Music</p>
+    <p class="subtitle">
+      <span id="direction_text">Spotify Liked Songs &rarr; YouTube Music</span>
+      <button id="swap" class="button blue swap" title="Swap direction">&#8644;</button>
+    </p>
 
     <div id="settings" hidden>
       <p class="help">
@@ -52,7 +55,17 @@
       </div>
     </div>
 
+    <div id="report" hidden>
+      <p class="help">Songs that were not found. Copy a name and add the song by hand: copied rows fade.</p>
+      <div id="rows" class="rows"></div>
+      <div class="buttons">
+        <a class="button blue" href="/report">Download CSV</a>
+        <button id="report_back" class="button blue">Back</button>
+      </div>
+    </div>
+
     <div id="home">
+    <select id="playlist" class="playlist" hidden></select>
     <p id="state" class="state">Loading...</p>
 
     <div class="progress">
@@ -77,7 +90,7 @@
       <button id="stop" class="button blue">Stop</button>
       <button id="sync" class="button blue">Sync</button>
       <button id="retry" class="button blue">Retry not found</button>
-      <a class="button blue" href="/report">Download report</a>
+      <button id="open_report" class="button blue">Not found list</button>
       <button id="open_settings" class="button blue">Settings</button>
     </div>
     </div>

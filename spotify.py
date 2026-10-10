@@ -13,7 +13,11 @@ def has_keys():
 
 
 def get_auth():
-    return SpotifyOAuth(scope="user-library-read", cache_path=".cache")
+    return SpotifyOAuth(scope="user-library-read user-library-modify", cache_path=".cache")
+
+
+def get_client():
+    return spotipy.Spotify(auth_manager=get_auth())
 
 
 def get_login_url():

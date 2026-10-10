@@ -9,6 +9,12 @@ let playerReady = false;
 let clicked = false;
 let audioContext = null;
 let askedForKeys = false;
+let direction = "to_youtube";
+let playlistsLoaded = false;
+
+const COPY_ICON =
+  '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
+  '<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1H4"/></svg>';
 
 const KEYS = ["SPOTIPY_CLIENT_ID", "SPOTIPY_CLIENT_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
 
@@ -57,6 +63,19 @@ async function refresh() {
   }
   el("timer").textContent = timer;
 
+  direction = data.direction;
+  if (direction === "to_spotify") {
+    el("direction_text").textContent = "YouTube Music → Spotify Liked Songs";
+  } else {
+    el("direction_text").textContent = "Spotify Liked Songs → YouTube Music";
+  }
+  el("playlist").hidden = direction !== "to_spotify";
+  el("swap").disabled = busy || data.running;
+  if (direction === "to_spotify" && data.youtube_logged_in && !playlistsLoaded) {
+    playlistsLoaded = true;
+    loadPlaylists();
+  }
+
   if (!data.has_keys && !askedForKeys) {
     askedForKeys = true;
     openSettings();
@@ -93,6 +112,14 @@ async function refresh() {
   el("retry").disabled = locked || notFound === 0;
 }
 
+function postJson(url, data) {
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 async function post(url, message) {
   busy = true;
   el("state").textContent = message;
@@ -100,16 +127,66 @@ async function post(url, message) {
   el("resume").disabled = true;
   el("sync").disabled = true;
   try {
-    await fetch(url, { method: "POST" });
+    await postJson(url, { playlist: el("playlist").value });
   } finally {
     busy = false;
     refresh();
   }
 }
 
-function showSettings(show) {
-  el("home").hidden = show;
-  el("settings").hidden = !show;
+function sync() {
+  if (direction === "to_spotify") {
+    post("/sync", "Reading the playlist from YouTube Music...");
+  } else {
+    post("/sync", "Fetching liked songs from Spotify...");
+  }
+}
+
+async function loadPlaylists() {
+  const playlists = await (await fetch("/playlists")).json();
+  el("playlist").textContent = "";
+  for (const playlist of playlists) {
+    const option = document.createElement("option");
+    option.value = playlist.id;
+    option.textContent = playlist.title;
+    el("playlist").append(option);
+  }
+}
+
+async function swapDirection() {
+  playlistsLoaded = false;
+  await postJson("/direction", { direction: direction === "to_spotify" ? "to_youtube" : "to_spotify" });
+  refresh();
+}
+
+function showView(name) {
+  for (const view of ["home", "settings", "report"]) {
+    el(view).hidden = view !== name;
+  }
+}
+
+async function openReport() {
+  const tracks = await (await fetch("/not_found")).json();
+  el("rows").textContent = tracks.length === 0 ? "Nothing here: every song was found." : "";
+  for (const track of tracks) {
+    const row = document.createElement("div");
+    row.className = track.copied ? "row copied" : "row";
+    const name = document.createElement("span");
+    name.textContent = track.artist + " - " + track.title;
+    const button = document.createElement("button");
+    button.className = "copy";
+    button.title = "Copy";
+    button.innerHTML = COPY_ICON;
+    button.onclick = async () => {
+      await navigator.clipboard.writeText(name.textContent);
+      row.className = "row copied";
+      playPop();
+      postJson("/copied", { id: track.id });
+    };
+    row.append(name, button);
+    el("rows").append(row);
+  }
+  showView("report");
 }
 
 async function openSettings() {
@@ -119,7 +196,7 @@ async function openSettings() {
   }
   el("code").hidden = true;
   el("code_error").textContent = "";
-  showSettings(true);
+  showView("settings");
 }
 
 async function saveSettings() {
@@ -127,11 +204,7 @@ async function saveSettings() {
   for (const key of KEYS) {
     values[key] = el(key).value;
   }
-  await fetch("/settings", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(values),
-  });
+  await postJson("/settings", values);
 }
 
 async function loginWithCode() {
@@ -218,7 +291,7 @@ el("mute").onclick = () => {
 
 el("start").onclick = () => {
   if (total === 0) {
-    post("/sync", "Fetching liked songs from Spotify...");
+    sync();
   } else {
     post("/start", "Starting...");
   }
@@ -231,15 +304,18 @@ el("stop").onclick = async () => {
 el("minimize").onclick = () => fetch("/window/minimize", { method: "POST" });
 el("close").onclick = () => fetch("/window/close", { method: "POST" });
 el("open_settings").onclick = openSettings;
-el("back").onclick = () => showSettings(false);
+el("back").onclick = () => showView("home");
 el("code_login").onclick = loginWithCode;
 el("save").onclick = async () => {
   await saveSettings();
-  showSettings(false);
+  showView("home");
   refresh();
 };
 el("resume").onclick = () => post("/start", "Resuming...");
-el("sync").onclick = () => post("/sync", "Fetching liked songs from Spotify...");
+el("sync").onclick = sync;
+el("swap").onclick = swapDirection;
+el("open_report").onclick = openReport;
+el("report_back").onclick = () => showView("home");
 el("retry").onclick = () => post("/retry", "Searching again for tracks that were not found...");
 
 const youtubeScript = document.createElement("script");

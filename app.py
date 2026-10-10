@@ -15,6 +15,7 @@ if getattr(sys, "frozen", False):
     os.chdir(data_folder)
 
 import db
+import reverse
 import settings
 import spotify
 import ytm
@@ -28,7 +29,21 @@ YOUTUBE_LOGIN_URL = (
     "https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26next%3Dhttps%253A%252F%252Fmusic.youtube.com%252F"
 )
 
-job = {"running": False, "stop": False, "error": "", "started": 0, "finished": 0, "done_at_start": 0}
+job = {
+    "running": False,
+    "stop": False,
+    "error": "",
+    "started": 0,
+    "finished": 0,
+    "done_at_start": 0,
+    "direction": "to_youtube",
+}
+
+
+def table():
+    if job["direction"] == "to_spotify":
+        return "yt_tracks"
+    return "tracks"
 
 
 def count_done(counts):
@@ -53,20 +68,26 @@ def run_job():
     yt = None
     while not job["stop"]:
         try:
-            if yt is None:
-                yt = ytm.get_client()
-                playlist_id = ytm.get_playlist_id(yt)
-            tracks = db.get_tracks(ytm.BATCH_SIZE)
-            if not tracks:
-                missing = ytm.find_missing(yt, playlist_id)
-                checks += 1
-                if missing == 0:
+            if job["direction"] == "to_spotify":
+                tracks = db.get_tracks(reverse.BATCH_SIZE, "yt_tracks")
+                if not tracks:
                     break
-                if checks >= MAX_CHECKS:
-                    job["error"] = str(missing) + " tracks could not be added. Click Resume to try again."
-                    break
-                continue
-            ytm.process_batch(yt, playlist_id, tracks, job)
+                reverse.process_batch(spotify.get_client(), tracks, job)
+            else:
+                if yt is None:
+                    yt = ytm.get_client()
+                    playlist_id = ytm.get_playlist_id(yt)
+                tracks = db.get_tracks(ytm.BATCH_SIZE)
+                if not tracks:
+                    missing = ytm.find_missing(yt, playlist_id)
+                    checks += 1
+                    if missing == 0:
+                        break
+                    if checks >= MAX_CHECKS:
+                        job["error"] = str(missing) + " tracks could not be added. Click Resume to try again."
+                        break
+                    continue
+                ytm.process_batch(yt, playlist_id, tracks, job)
             failures = 0
             job["error"] = ""
         except Exception as e:
@@ -95,7 +116,7 @@ def start_job():
     job["error"] = ""
     job["started"] = time.time()
     job["finished"] = 0
-    job["done_at_start"] = count_done(db.count_by_status())
+    job["done_at_start"] = count_done(db.count_by_status(table()))
     threading.Thread(target=run_job, daemon=True).start()
 
 
@@ -188,22 +209,62 @@ def start():
 @app.route("/retry", methods=["POST"])
 def retry_not_found():
     if not job["running"]:
-        db.reset_not_found()
+        db.reset_not_found(table())
         start_job()
     return jsonify({"ok": True})
 
 
 @app.route("/sync", methods=["POST"])
 def sync():
-    tracks = spotify.fetch_liked_tracks()
-    added = db.insert_new_tracks(tracks)
+    if job["direction"] == "to_spotify":
+        try:
+            tracks = reverse.fetch_playlist_tracks(ytm.get_client(), request.get_json()["playlist"])
+        except Exception as e:
+            job["error"] = "Could not read the playlist: " + str(e)
+            return jsonify({"ok": False})
+    else:
+        tracks = spotify.fetch_liked_tracks()
+    added = db.insert_new_tracks(tracks, table())
     start_job()
     return jsonify({"total": len(tracks), "new": added})
 
 
+@app.route("/direction", methods=["POST"])
+def set_direction():
+    if not job["running"]:
+        job["direction"] = request.get_json()["direction"]
+        job["error"] = ""
+        job["started"] = 0
+    return jsonify({"ok": True})
+
+
+@app.route("/playlists")
+def playlists():
+    try:
+        return jsonify(reverse.get_playlists(ytm.get_client()))
+    except Exception as e:
+        job["error"] = "Could not load YouTube Music playlists: " + str(e)
+        return jsonify([])
+
+
+@app.route("/not_found")
+def not_found():
+    key = db.KEYS[table()]
+    rows = []
+    for track in db.get_not_found(table()):
+        rows.append({"id": track[key], "title": track["title"], "artist": track["artist"], "copied": track["copied"]})
+    return jsonify(rows)
+
+
+@app.route("/copied", methods=["POST"])
+def copied():
+    db.set_copied(table(), request.get_json()["id"], 1)
+    return jsonify({"ok": True})
+
+
 @app.route("/status")
 def status():
-    counts = db.count_by_status()
+    counts = db.count_by_status(table())
     elapsed, eta = get_timer(counts)
     return jsonify(
         {
@@ -213,6 +274,7 @@ def status():
             "counts": counts,
             "elapsed": elapsed,
             "eta": eta,
+            "direction": job["direction"],
             "running": job["running"],
             "stopping": job["running"] and job["stop"],
             "error": job["error"],
@@ -224,9 +286,13 @@ def status():
 def report():
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["title", "artist", "spotify url"])
-    for track in db.get_not_found():
-        writer.writerow([track["title"], track["artist"], "https://open.spotify.com/track/" + track["spotify_id"]])
+    writer.writerow(["title", "artist", "url"])
+    for track in db.get_not_found(table()):
+        if job["direction"] == "to_spotify":
+            url = "https://music.youtube.com/watch?v=" + track["video_id"]
+        else:
+            url = "https://open.spotify.com/track/" + track["spotify_id"]
+        writer.writerow([track["title"], track["artist"], url])
     return Response(
         "﻿" + output.getvalue(),
         mimetype="text/csv",
