@@ -279,6 +279,18 @@ h1 {
   top: 0;
 }
 
+@media (max-height: 640px) {
+  .glass {
+    zoom: 0.8;
+  }
+}
+
+@media (max-height: 460px) {
+  .glass {
+    zoom: 0.6;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bubble,
   body::before,

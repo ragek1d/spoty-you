@@ -5,6 +5,8 @@ import io
 import threading
 import time
 
+import webview
+
 import db
 import spotify
 import ytm
@@ -161,6 +163,22 @@ def error_sound():
     return send_file("C:/Windows/Media/Windows Critical Stop.wav")
 
 
+def run_server():
+    app.run(host="127.0.0.1", port=8888)
+
+
 if __name__ == "__main__":
     db.init_db()
-    app.run(host="127.0.0.1", port=8888)
+    threading.Thread(target=run_server, daemon=True).start()
+    screen = webview.screens[0]
+    webview.settings["ALLOW_DOWNLOADS"] = True
+    webview.create_window(
+        "spoty-you",
+        "http://127.0.0.1:8888",
+        width=screen.width // 2,
+        height=screen.height // 2,
+        x=screen.width // 4,
+        y=screen.height // 4,
+        resizable=False,
+    )
+    webview.start()
