@@ -16,7 +16,8 @@ Owner is a beginner in Python: keep code simple, readable, no clever tricks.
 - build.bat     PyInstaller build -> dist\spoty-you\spoty-you.exe (data files live next to the exe)
 - spotify.py    login, fetch liked tracks
 - ytm.py        search, match, add to playlist; login via window cookies (headers_auth.json) or device code (oauth.json)
-- db.py         SQLite: tracks(spotify_id, title, artist, duration, video_id, status)
+- reverse.py    YouTube Music playlist -> Spotify Liked Songs (search on Spotify, save with PUT /me/library, 40 per request)
+- db.py         SQLite: tracks(spotify_id, title, artist, duration, video_id, status, copied), yt_tracks (same, keyed by video_id) for the reverse direction
 - static/       index.html, style.css, app.js
 - secrets live in .env and headers_auth.json (both in .gitignore, never commit)
 
@@ -30,7 +31,9 @@ Owner is a beginner in Python: keep code simple, readable, no clever tricks.
 
 ## UI
 - English only. Windows 7 Frutiger Aero: glossy aqua/green gradients, glass panels with blur and soft shadows, rounded corners, bubbles/sky background, Segoe UI.
-- Progress bar, buttons: Spotify login, YouTube login, Start, Resume, Sync, Retry not found, Download report, Settings.
+- Frameless window: own minimize/close buttons, drag by the background.
+- Progress bar, buttons: Spotify login, YouTube login, Start, Resume, Stop, Sync, Retry not found, Not found list, Settings, swap direction.
+- Port 8888 is fixed: never test while the user's own copy of the app is running (use another port and data folder).
 
 ## Commands
 - Setup: pip install -r requirements.txt
