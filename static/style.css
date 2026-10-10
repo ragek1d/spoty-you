@@ -301,6 +301,24 @@ h1 {
   outline: 2px solid #1688dc;
 }
 
+.drag {
+  position: fixed;
+  inset: 0;
+}
+
+.window-buttons {
+  position: fixed;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.window-buttons .button {
+  padding: 3px 12px;
+  font-size: 13px;
+}
+
 .mute {
   position: absolute;
   top: 14px;

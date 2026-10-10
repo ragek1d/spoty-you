@@ -69,6 +69,8 @@ async function refresh() {
       el("state").textContent = "Not logged in to Spotify";
     } else if (!data.youtube_logged_in) {
       el("state").textContent = "Not logged in to YouTube Music";
+    } else if (data.stopping) {
+      el("state").textContent = "Stopping...";
     } else if (data.running) {
       el("state").textContent = "Copying tracks...";
     } else if (total > 0 && pending === 0) {
@@ -86,6 +88,7 @@ async function refresh() {
   const locked = busy || data.running || !data.logged_in || !data.youtube_logged_in;
   el("start").disabled = locked;
   el("resume").disabled = locked;
+  el("stop").disabled = !data.running || data.stopping;
   el("sync").disabled = locked;
   el("retry").disabled = locked || notFound === 0;
 }
@@ -221,6 +224,12 @@ el("start").onclick = () => {
   }
 };
 el("youtube").onclick = () => fetch("/youtube/login", { method: "POST" });
+el("stop").onclick = async () => {
+  await fetch("/stop", { method: "POST" });
+  refresh();
+};
+el("minimize").onclick = () => fetch("/window/minimize", { method: "POST" });
+el("close").onclick = () => fetch("/window/close", { method: "POST" });
 el("open_settings").onclick = openSettings;
 el("back").onclick = () => showSettings(false);
 el("code_login").onclick = loginWithCode;

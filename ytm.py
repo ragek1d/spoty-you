@@ -172,12 +172,14 @@ def get_playlist_id(yt):
     return playlist_id
 
 
-def process_batch(yt, playlist_id, tracks):
+def process_batch(yt, playlist_id, tracks, job):
     already_added = db.get_added_video_ids()
     results = []
     to_add = []
     last_error = None
     for track in tracks:
+        if job["stop"]:
+            break
         video_id = track["video_id"]
         if not video_id:
             try:

@@ -10,7 +10,9 @@ import time
 import webview
 
 if getattr(sys, "frozen", False):
-    os.chdir(os.path.dirname(sys.executable))
+    data_folder = os.path.join(os.environ["APPDATA"], "spoty-you")
+    os.makedirs(data_folder, exist_ok=True)
+    os.chdir(data_folder)
 
 import db
 import settings
@@ -26,7 +28,7 @@ YOUTUBE_LOGIN_URL = (
     "https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26next%3Dhttps%253A%252F%252Fmusic.youtube.com%252F"
 )
 
-job = {"running": False, "error": "", "started": 0, "finished": 0, "done_at_start": 0}
+job = {"running": False, "stop": False, "error": "", "started": 0, "finished": 0, "done_at_start": 0}
 
 
 def count_done(counts):
@@ -49,7 +51,7 @@ def run_job():
     failures = 0
     checks = 0
     yt = None
-    while True:
+    while not job["stop"]:
         try:
             if yt is None:
                 yt = ytm.get_client()
@@ -64,7 +66,7 @@ def run_job():
                     job["error"] = str(missing) + " tracks could not be added. Click Resume to try again."
                     break
                 continue
-            ytm.process_batch(yt, playlist_id, tracks)
+            ytm.process_batch(yt, playlist_id, tracks, job)
             failures = 0
             job["error"] = ""
         except Exception as e:
@@ -74,8 +76,13 @@ def run_job():
                 break
             wait = min(30 * failures, 300)
             job["error"] = str(e) + " (trying again in " + str(wait) + " seconds)"
-            time.sleep(wait)
+            for second in range(wait):
+                if job["stop"]:
+                    break
+                time.sleep(1)
             yt = None
+    if job["stop"]:
+        job["error"] = ""
     job["finished"] = time.time()
     job["running"] = False
 
@@ -84,6 +91,7 @@ def start_job():
     if job["running"]:
         return
     job["running"] = True
+    job["stop"] = False
     job["error"] = ""
     job["started"] = time.time()
     job["finished"] = 0
@@ -206,6 +214,7 @@ def status():
             "elapsed": elapsed,
             "eta": eta,
             "running": job["running"],
+            "stopping": job["running"] and job["stop"],
             "error": job["error"],
         }
     )
@@ -223,6 +232,25 @@ def report():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=not_found.csv"},
     )
+
+
+@app.route("/stop", methods=["POST"])
+def stop():
+    if job["running"]:
+        job["stop"] = True
+    return jsonify({"ok": True})
+
+
+@app.route("/window/minimize", methods=["POST"])
+def minimize_window():
+    webview.windows[0].minimize()
+    return jsonify({"ok": True})
+
+
+@app.route("/window/close", methods=["POST"])
+def close_window():
+    webview.windows[0].destroy()
+    return jsonify({"ok": True})
 
 
 @app.route("/sounds/error")
@@ -247,5 +275,7 @@ if __name__ == "__main__":
         x=screen.width // 4,
         y=screen.height // 4,
         resizable=False,
+        frameless=True,
+        easy_drag=False,
     )
     webview.start()
